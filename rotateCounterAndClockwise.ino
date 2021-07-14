@@ -22,6 +22,8 @@ void setup(){
    stepper.setAcceleration(1000);
    // 16 step resolution -> max speed 11000 (with more torque)
    // 1 step resolution -> max speed 500 (with less torque)
+   //H H H Sixteenth Step 4W1-2 Phase
+   //L L L Full Step 2 Phase
    }
 
 void loop(){  
