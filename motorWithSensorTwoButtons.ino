@@ -11,8 +11,13 @@ int homePin = 11;
 long pos = 0;
 int button1 = 10;
 int button2 = 12;
-int startMillis = 0;
-
+int start1Millis = 0;
+int start2Millis = 0;
+int incomingByte = 0;
+String oldString = "";
+bool notprinted = false;
+bool sliderDir = 0;
+bool runStepper = false;
 //4100 pulses for 145mm
 //28,27 pulse/mm
 
@@ -101,12 +106,15 @@ void countPin2(){
 void loop() {
   // put your main code here, to run repeatedly:
   int currentMillis = millis();
-  if ((currentMillis - startMillis >= 100)){
+  if ((currentMillis - start1Millis >= 100)){
     Serial.print("pos: ");
     Serial.println(pos);
-    startMillis = currentMillis;
+    start1Millis = currentMillis;
   }
-
+  if ((currentMillis - start2Millis >= 1000)){
+    runStepper = false;
+    start2Millis = currentMillis;
+  }
   bool button1pin = digitalRead(button1);
   bool button2pin = digitalRead(button2);
   //Serial.print("button 1: ");
@@ -124,5 +132,52 @@ void loop() {
       stepper.disableOutputs();
     }
   }
+
+  /*if (Serial.available() > 0) {
+      oldString = "";
+      while(oldString.length() < 4){
+          //String temp = Serial.read();
+          incomingByte = Serial.read();
+          incomingByte = incomingByte - 48;
+          oldString = oldString + String(incomingByte);
+
+      }
+      if (oldString.length() == 4){
+        Serial.println(oldString);
+      }
+  }*/
+  while(Serial.available() > 0){
+    char char1 = Serial.read();
+    int int1 = Serial.parseInt();
+    char char2 = Serial.read();
+    if(char2 == '\n'){
+     //end of serial
+     oldString = String(char1) + String(int1);
+    }else{
+      char ende = Serial.read();
+      if(ende == '\n'){}
+      oldString = String(char1) + String(int1) + String(char2);
+    }
+    notprinted = true;
+    if(char1 == 'U'){
+      stepper.setSpeed(-14000);
+      runStepper = true;
+    }else{
+      if(char1 == 'D'){
+        stepper.setSpeed(14000);
+        runStepper = true;
+      }
+    }
+  }
+  if(notprinted){
+    Serial.println(oldString);
+    notprinted = false;
+    
+  }
+  if(runStepper){
+      stepper.runSpeed();
+  }
+
+  
   //stepper.run();
 }
