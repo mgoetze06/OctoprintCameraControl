@@ -18,6 +18,9 @@ String oldString = "";
 bool notprinted = false;
 bool sliderDir = 0;
 bool runStepper = false;
+int oldposition = 0;
+int targetposition = 0;
+int offset = 5;
 //4100 pulses for 145mm
 //28,27 pulse/mm
 
@@ -106,13 +109,13 @@ void countPin2(){
 void loop() {
   // put your main code here, to run repeatedly:
   int currentMillis = millis();
-  if ((currentMillis - start1Millis >= 100)){
+  if ((currentMillis - start1Millis >= 2000)){
     Serial.print("pos: ");
     Serial.println(pos);
     start1Millis = currentMillis;
   }
   if ((currentMillis - start2Millis >= 1000)){
-    runStepper = false;
+    //runStepper = false;
     start2Millis = currentMillis;
   }
   bool button1pin = digitalRead(button1);
@@ -129,7 +132,7 @@ void loop() {
       stepper.setSpeed(-14000);
       stepper.runSpeed();  
     }else{
-      stepper.disableOutputs();
+      //stepper.disableOutputs();
     }
   }
 
@@ -159,15 +162,25 @@ void loop() {
       oldString = String(char1) + String(int1) + String(char2);
     }
     notprinted = true;
+    oldposition = pos;
     if(char1 == 'U'){
       stepper.setSpeed(-14000);
       runStepper = true;
+      targetposition = oldposition - int1;
+      sliderDir = true;
     }else{
       if(char1 == 'D'){
         stepper.setSpeed(14000);
         runStepper = true;
+        targetposition = oldposition + int1;
+        sliderDir = false;
       }
     }
+    Serial.print("targetposition: ");
+    Serial.println(targetposition);
+    Serial.print("oldposition: ");
+    Serial.println(oldposition);
+    
   }
   if(notprinted){
     Serial.println(oldString);
@@ -176,6 +189,12 @@ void loop() {
   }
   if(runStepper){
       stepper.runSpeed();
+  }
+  //if((abs(pos) < abs(targetposition - offset))or(abs(pos) > abs(targetposition + offset))){
+  if(((pos < targetposition + offset)and(sliderDir == 1))or((pos > targetposition + offset)and(sliderDir == 0))){
+    runStepper = false;
+  }else{
+    runStepper = true;
   }
 
   
